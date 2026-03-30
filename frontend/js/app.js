@@ -6,29 +6,18 @@
 const API_BASE = "http://localhost:5000/api";
 
 /* ── State ───────────────────────────────────────────────────────────────── */
-let selectedImageFile = null;
 let cachedMedicines   = [];
+
 
 /* ── Boot ────────────────────────────────────────────────────────────────── */
 document.addEventListener("DOMContentLoaded", () => {
   loadHistory();
   loadMedicineList();
-  setupDragDrop();
   setupAutocomplete();
   setupEnterKey();
 });
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   TAB SWITCHING
-═══════════════════════════════════════════════════════════════════════════ */
-function switchTab(tabName) {
-  document.querySelectorAll(".tab").forEach((t) =>
-    t.classList.toggle("active", t.dataset.tab === tabName)
-  );
-  document.querySelectorAll(".tab-panel").forEach((p) =>
-    p.classList.toggle("active", p.id === `tab-${tabName}`)
-  );
-}
+
 
 /* ═══════════════════════════════════════════════════════════════════════════
    RESULT SECTION TABS
@@ -105,45 +94,6 @@ async function loadMedicineList() {
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   IMAGE UPLOAD
-═══════════════════════════════════════════════════════════════════════════ */
-function handleImageSelect(event) {
-  const file = event.target.files[0];
-  if (file) setImageFile(file);
-}
-
-function setImageFile(file) {
-  selectedImageFile = file;
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const preview = document.getElementById("image-preview");
-    const content = document.getElementById("upload-content");
-    preview.src = e.target.result;
-    preview.classList.remove("hidden");
-    content.classList.add("hidden");
-  };
-  reader.readAsDataURL(file);
-
-  document.getElementById("btn-image-search").disabled = false;
-}
-
-function setupDragDrop() {
-  const zone = document.getElementById("upload-zone");
-
-  zone.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    zone.classList.add("dragover");
-  });
-  zone.addEventListener("dragleave", () => zone.classList.remove("dragover"));
-  zone.addEventListener("drop", (e) => {
-    e.preventDefault();
-    zone.classList.remove("dragover");
-    const file = e.dataTransfer?.files[0];
-    if (file && file.type.startsWith("image/")) setImageFile(file);
-  });
-}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    UI STATE HELPERS
@@ -153,8 +103,8 @@ function showLoader(message) {
   show("loader");
   hide("results");
   hide("error-card");
-  hide("identify-banner");
 }
+
 
 function hideLoader() { hide("loader"); }
 
@@ -214,56 +164,6 @@ async function searchByName() {
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   SEARCH BY IMAGE
-═══════════════════════════════════════════════════════════════════════════ */
-async function searchByImage() {
-  if (!selectedImageFile) {
-    showError("Please select an image first.");
-    return;
-  }
-
-  showLoader("Identifying medicine from image…");
-
-  const loaderTimer = setTimeout(() => {
-    setText("loader-text", "Cross-verifying with FDA database…");
-  }, 3200);
-
-  try {
-    const formData = new FormData();
-    formData.append("image", selectedImageFile);
-
-    const res = await fetch(`${API_BASE}/search/image`, {
-      method: "POST",
-      body:   formData,
-    });
-    clearTimeout(loaderTimer);
-    const data = await res.json();
-
-    hideLoader();
-
-    if (!data.success) {
-      showError(data.message || "Could not identify the medicine in this image.");
-      return;
-    }
-
-    // Show identification banner
-    if (data.imageAnalysis) {
-      const { identifiedName, confidence } = data.imageAnalysis;
-      setText("identify-name", identifiedName);
-      setText("identify-conf", confidence + " confidence");
-      show("identify-banner");
-    }
-
-    renderResult(data.data, data.source);
-    loadHistory();
-  } catch (_) {
-    clearTimeout(loaderTimer);
-    showError(
-      "Cannot connect to the server. Please make sure the backend is running on port 5000."
-    );
-  }
-}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    RENDER RESULT
@@ -392,7 +292,6 @@ async function loadHistory() {
         onclick="quickSearch('${escAttr(h.medicineName || h.query)}')"
         title="Search ${escAttr(h.medicineName || h.query)}"
       >
-        ${h.imageSearch ? '<span class="chip-img">⊞</span>' : ""}
         ${escHtml(h.medicineName || h.query)}
       </span>`
       )
@@ -405,11 +304,11 @@ async function loadHistory() {
 }
 
 function quickSearch(name) {
-  switchTab("text");
   document.getElementById("medicine-input").value = name;
   document.getElementById("autocomplete").innerHTML = "";
   searchByName();
 }
+
 
 /* ═══════════════════════════════════════════════════════════════════════════
    UTILITIES

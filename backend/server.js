@@ -51,7 +51,6 @@ app.listen(PORT, () => {
   console.log(`\n    Endpoints:`);
   console.log(`      GET  /api/health`);
   console.log(`      POST /api/search         { name: "aspirin" }`);
-  console.log(`      POST /api/search/image   multipart image upload`);
   console.log(`      GET  /api/history`);
   console.log(`      GET  /api/medicines\n`);
 });

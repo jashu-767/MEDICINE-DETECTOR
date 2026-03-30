@@ -6,7 +6,6 @@ const router     = express.Router();
 const rateLimit  = require("express-rate-limit");
 
 const medicineController = require("../controllers/medicineController");
-const upload             = require("../middleware/upload");
 
 // ── Rate limiting: 10 requests per minute per IP ──────────────────────────────
 const searchLimiter = rateLimit({
@@ -31,14 +30,6 @@ router.get("/health", (req, res) =>
 // Body: { "name": "aspirin" }
 router.post("/search", searchLimiter, medicineController.searchByName);
 
-// Search by image
-// Form field: "image" (JPEG / PNG / WebP / GIF, max 5 MB)
-router.post(
-  "/search/image",
-  searchLimiter,
-  upload.single("image"),
-  medicineController.searchByImage
-);
 
 // Recent search history (last 20 successful searches)
 router.get("/history", medicineController.getHistory);

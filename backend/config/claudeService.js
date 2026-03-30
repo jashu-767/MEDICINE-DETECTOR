@@ -59,43 +59,6 @@ Return ONLY valid JSON (absolutely no markdown, no code blocks, no extra text):
 }`;
 };
 
-const buildImagePrompt = () => {
-  return `You are a medical AI expert in medicine identification. Analyse the described medicine image carefully.
-
-Return ONLY valid JSON (no markdown, no code blocks, no extra text):
-{
-  "identifiedName": "medicine name or null if unidentifiable",
-  "confidence": "high|medium|low",
-  "identificationMethod": "how you identified it",
-  "name": "UPPERCASE NAME",
-  "genericName": "active ingredient(s)",
-  "brandNames": ["brand1", "brand2"],
-  "manufacturer": "company or null",
-  "drugClass": "pharmacological class",
-  "usageDescription": "4-6 sentence description of what it treats and how it works",
-  "usages": ["use1","use2","use3","use4","use5","use6"],
-  "sideEffects": [
-    {"severity":"mild",    "effect":"effect","frequency":"common (>10%)"},
-    {"severity":"mild",    "effect":"effect","frequency":"common (>10%)"},
-    {"severity":"moderate","effect":"effect","frequency":"uncommon (1-10%)"},
-    {"severity":"moderate","effect":"effect","frequency":"uncommon (1-10%)"},
-    {"severity":"severe",  "effect":"effect","frequency":"rare (<1%)"},
-    {"severity":"severe",  "effect":"effect","frequency":"rare (<1%)"}
-  ],
-  "sideEffectsDescription": "paragraph about side effects",
-  "alternatives": [
-    {"name":"Alt1","genericName":"g","manufacturer":"c","reason":"reason"},
-    {"name":"Alt2","genericName":"g","manufacturer":"c","reason":"reason"},
-    {"name":"Alt3","genericName":"g","manufacturer":"c","reason":"reason"}
-  ],
-  "alternativesDescription": "paragraph about alternatives",
-  "dosageInfo": "dosage info for adults and children",
-  "warnings": ["w1","w2","w3","w4"],
-  "contraindications": ["c1","c2","c3"],
-  "interactions": ["i1","i2","i3","i4"]
-}`;
-};
-
 const getMedicineInfoFromClaude = async (medicineName, fdaData = null) => {
   try {
     const completion = await getClient().chat.completions.create({
@@ -123,39 +86,4 @@ const getMedicineInfoFromClaude = async (medicineName, fdaData = null) => {
   }
 };
 
-const getMedicineInfoFromImage = async (base64Image, mimeType = "image/jpeg", fdaData = null) => {
-  try {
-    // Groq supports vision with llama-4 scout model
-    const completion = await getClient().chat.completions.create({
-      model: "meta-llama/llama-4-scout-17b-16e-instruct",
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: buildImagePrompt(),
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:${mimeType};base64,${base64Image}`,
-              },
-            },
-          ],
-        },
-      ],
-      temperature: 0.3,
-      max_tokens: 2500,
-    });
-
-    const text = completion.choices[0]?.message?.content || "";
-    const clean = text.replace(/```json/g, "").replace(/```/g, "").trim();
-    return JSON.parse(clean);
-  } catch (err) {
-    console.error("Groq image error:", err.message);
-    throw err;
-  }
-};
-
-module.exports = { getMedicineInfoFromClaude, getMedicineInfoFromImage };
+module.exports = { getMedicineInfoFromClaude };

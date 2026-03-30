@@ -28,15 +28,7 @@
     <!-- ── Search Card ──────────────────────────────────────────────────── -->
     <section class="search-card">
 
-      <!-- Mode tabs -->
-      <div class="tab-bar">
-        <button class="tab active" data-tab="text" onclick="switchTab('text')">
-          <span class="tab-icon">⌕</span> Search by Name
-        </button>
-        <button class="tab" data-tab="image" onclick="switchTab('image')">
-          <span class="tab-icon">⊞</span> Search by Image
-        </button>
-      </div>
+
 
       <!-- Text search panel -->
       <div class="tab-panel active" id="tab-text">
@@ -58,37 +50,7 @@
         </div>
       </div>
 
-      <!-- Image search panel -->
-      <div class="tab-panel" id="tab-image">
-        <div
-          class="upload-zone"
-          id="upload-zone"
-          onclick="document.getElementById('image-input').click()"
-        >
-          <input
-            type="file"
-            id="image-input"
-            accept="image/*"
-            style="display:none"
-            onchange="handleImageSelect(event)"
-          />
-          <div class="upload-content" id="upload-content">
-            <div class="upload-icon">⊞</div>
-            <p class="upload-text">Drop a photo or click to upload</p>
-            <p class="upload-hint">Pill, blister pack, bottle, or packaging · JPG / PNG / WebP · max 5 MB</p>
-          </div>
-          <img id="image-preview" class="image-preview hidden" alt="Preview" />
-        </div>
-        <button
-          class="btn-search"
-          id="btn-image-search"
-          onclick="searchByImage()"
-          disabled
-        >
-          <span class="btn-label">Identify Medicine</span>
-          <span class="btn-arrow">→</span>
-        </button>
-      </div>
+
 
       <!-- Source badges -->
       <div class="source-badges">
@@ -112,12 +74,7 @@
       <button class="btn-retry" onclick="clearError()">Try Again</button>
     </div>
 
-    <!-- ── Image identification banner ───────────────────────────────────── -->
-    <div class="identify-banner hidden" id="identify-banner">
-      <span class="identify-label">Identified from image:</span>
-      <span class="identify-name" id="identify-name"></span>
-      <span class="identify-conf" id="identify-conf"></span>
-    </div>
+
 
     <!-- ── Results ───────────────────────────────────────────────────────── -->
     <section class="results hidden" id="results">

@@ -1,13 +1,10 @@
 // backend/controllers/medicineController.js
-// Core business logic: search by name, search by image, history, medicine list
+// Core business logic: search by name, history, medicine list
 
 const Medicine = require("../models/Medicine");
 const SearchHistory = require("../models/SearchHistory");
 const { fetchFDADataWithFallback } = require("../config/fdaService");
-const {
-  getMedicineInfoFromClaude,
-  getMedicineInfoFromImage,
-} = require("../config/claudeService");
+const { getMedicineInfoFromClaude } = require("../config/claudeService");
 
 // ── Helper: intelligently merge FDA + Claude data ─────────────────────────────
 const mergeData = (fdaData, claudeData) => {
@@ -141,77 +138,6 @@ exports.searchByName = async (req, res) => {
       success: false,
       message:
         "An error occurred while fetching medicine information. Please try again.",
-    });
-  }
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// POST /api/search/image   multipart form with field "image"
-// ─────────────────────────────────────────────────────────────────────────────
-exports.searchByImage = async (req, res) => {
-  const startTime = Date.now();
-
-  if (!req.file) {
-    return res.status(400).json({
-      success: false,
-      message: "Please upload an image of the medicine.",
-    });
-  }
-
-  try {
-    const base64Image = req.file.buffer.toString("base64");
-    const mimeType    = req.file.mimetype;
-
-    // 1. Claude Vision identifies the medicine from the image
-    console.log("🖼️  Analysing medicine image with Claude Vision...");
-    const claudeData = await getMedicineInfoFromImage(base64Image, mimeType);
-
-    if (!claudeData.identifiedName) {
-      return res.status(404).json({
-        success: false,
-        message:
-          "Could not identify any medicine in this image. Please ensure the medicine name or imprint is clearly visible.",
-      });
-    }
-
-    console.log(
-      `✅ Identified: ${claudeData.identifiedName} (confidence: ${claudeData.confidence})`
-    );
-
-    // 2. Cross-verify with FDA using the identified name
-    const fdaData = await fetchFDADataWithFallback(claudeData.identifiedName);
-
-    // 3. Merge & save
-    const merged = mergeData(fdaData, claudeData);
-    merged.name  = merged.name || claudeData.identifiedName.toUpperCase();
-    const medicine = await upsertMedicine(merged);
-
-    await SearchHistory.create({
-      query:         `[IMAGE] ${claudeData.identifiedName}`,
-      imageSearch:   true,
-      medicineName:  medicine.name,
-      medicineId:    medicine._id,
-      success:       true,
-      responseTimeMs: Date.now() - startTime,
-      ipAddress:     req.ip,
-    });
-
-    return res.json({
-      success: true,
-      data:    medicine,
-      imageAnalysis: {
-        identifiedName:       claudeData.identifiedName,
-        confidence:           claudeData.confidence,
-        identificationMethod: claudeData.identificationMethod,
-      },
-      source: "image",
-    });
-  } catch (err) {
-    console.error("searchByImage error:", err);
-    return res.status(500).json({
-      success: false,
-      message:
-        "Image analysis failed. Please try again with a clearer image.",
     });
   }
 };
