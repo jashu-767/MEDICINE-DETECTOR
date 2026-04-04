@@ -1,0 +1,24 @@
+# Blueprint: deploy backend/ as a Node.js web service on Render.
+# Variables with sync: false must be set in the Render dashboard (Environment).
+
+services:
+  - type: web
+    name: medicine-detection-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: FDA_API_BASE_URL
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
