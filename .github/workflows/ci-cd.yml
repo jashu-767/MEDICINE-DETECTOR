@@ -1,0 +1,66 @@
+name: MediScan CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+
+  test-backend:
+    name: Lint and Test Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install dependencies
+        working-directory: backend
+        run: npm install
+
+      - name: Check syntax
+        working-directory: backend
+        run: node --check server.js
+
+      - name: Verify project files
+        run: |
+          test -f backend/server.js && echo "server.js found"
+          test -f frontend/index.html && echo "index.html found"
+          echo "All files verified!"
+
+  deploy-backend:
+    name: Deploy Backend to Render
+    runs-on: ubuntu-latest
+    needs: test-backend
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Trigger Render Deployment
+        run: |
+          curl "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+          echo "Backend deployment triggered!"
+
+  deploy-frontend:
+    name: Deploy Frontend to Vercel
+    runs-on: ubuntu-latest
+    needs: test-backend
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Deploy to Vercel
+        working-directory: frontend
+        run: |
+          vercel --prod \
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --yes
+          echo "Frontend deployed!"
